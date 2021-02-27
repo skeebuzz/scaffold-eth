@@ -55,5 +55,9 @@
       "**/@graphprotocol/graph-ts",
       "**/@graphprotocol/graph-ts/**"
     ]
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.13.8",
+    "coingecko-api": "^1.0.10"
   }
 }

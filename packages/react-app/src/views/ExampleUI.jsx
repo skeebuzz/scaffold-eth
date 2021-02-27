@@ -6,7 +6,7 @@ import { SyncOutlined } from '@ant-design/icons';
 import { Address, Balance } from "../components";
 import { parseEther, formatEther } from "@ethersproject/units";
 
-export default function ExampleUI({purpose, setPurposeEvents, address, mainnetProvider, userProvider, localProvider, yourLocalBalance, price, tx, readContracts, writeContracts }) {
+export default function ExampleUI({purpose, setPurposeEvents, address, ethProvider, userProvider, localProvider, yourLocalBalance, ethPrice, tx, readContracts, writeContracts }) {
 
   const [newPurpose, setNewPurpose] = useState("loading...");
 
@@ -37,7 +37,7 @@ export default function ExampleUI({purpose, setPurposeEvents, address, mainnetPr
         Your Address:
         <Address
             address={address}
-            ensProvider={mainnetProvider}
+            ensProvider={ethProvider}
             fontSize={16}
         />
 
@@ -46,7 +46,7 @@ export default function ExampleUI({purpose, setPurposeEvents, address, mainnetPr
         ENS Address Example:
         <Address
           address={"0x34aA3F359A9D614239015126635CE7732c18fDF3"} /* this will show as austingriffith.eth */
-          ensProvider={mainnetProvider}
+          ensProvider={ethProvider}
           fontSize={16}
         />
 
@@ -60,7 +60,7 @@ export default function ExampleUI({purpose, setPurposeEvents, address, mainnetPr
         <Balance
           address={address}
           provider={localProvider}
-          price={price}
+          price={ethPrice}
         />
 
         <Divider/>
@@ -76,7 +76,7 @@ export default function ExampleUI({purpose, setPurposeEvents, address, mainnetPr
         Your Contract Address:
         <Address
             address={readContracts?readContracts.YourContract.address:readContracts}
-            ensProvider={mainnetProvider}
+            ensProvider={ethProvider}
             fontSize={16}
         />
 
@@ -142,7 +142,7 @@ export default function ExampleUI({purpose, setPurposeEvents, address, mainnetPr
               <List.Item key={item.blockNumber+"_"+item.sender+"_"+item.purpose}>
                 <Address
                     address={item[0]}
-                    ensProvider={mainnetProvider}
+                    ensProvider={ethProvider}
                     fontSize={16}
                   /> =>
                 {item[1]}

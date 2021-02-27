@@ -8,12 +8,25 @@ import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { useUserAddress } from "eth-hooks";
 import { useExchangePrice, useGasPrice, useUserProvider, useContractLoader, useContractReader, useEventListener, useBalance, useExternalContractLoader } from "./hooks";
-import { Header, Account, Faucet, Ramp, Contract, GasGauge } from "./components";
+import  useCoinGeckoPrices  from "./hooks/CoinGeckoPrices";
+import {Header, Account, Faucet, Ramp, Contract, GasGauge, Provider} from "./components";
 import { Transactor } from "./helpers";
 import { formatEther, parseEther } from "@ethersproject/units";
+
 //import Hints from "./Hints";
-import { Hints, ExampleUI, Subgraph } from "./views"
+import { Hints, ExampleUI, Subgraph, Unitracker } from "./views"
 import { INFURA_ID, DAI_ADDRESS, DAI_ABI, NETWORK, NETWORKS } from "./constants";
+
+const CoinGecko = require('coingecko-api');
+const CoinGeckoClient = new CoinGecko();
+
+// CoinGeckoClient.simple.price({"vs_currencies": "usd", "ids": ["binance-eth", "binance-btc", "binancecoin"]}).then(res => console.log(res));
+
+const { ethers } = require("ethers");
+const { erc20Abi } = require("./abi/erc20.json");
+// import { masterChefAbi} from "./abi/masterchef.json";
+
+
 /*
     Welcome to 🏗 scaffold-eth !
 
@@ -61,6 +74,9 @@ function App(props) {
   const [injectedProvider, setInjectedProvider] = useState();
   /* 💵 This hook will get the price of ETH from 🦄 Uniswap: */
   const price = useExchangePrice(targetNetwork,mainnetProvider);
+
+  // this hook will get some base coin prices from coingecko
+  const prices = useCoinGeckoPrices(CoinGeckoClient);
 
   /* 🔥 This hook will get the price of Gas from ⛽️ EtherGasStation */
   const gasPrice = useGasPrice(targetNetwork,"fast");
@@ -124,7 +140,11 @@ function App(props) {
   console.log("🏷 Resolved austingriffith.eth as:",addressFromENS)
   */
   let networkDisplay = ""
+   /*
   if(localChainId && selectedChainId && localChainId != selectedChainId ){
+    console.log("localChainid: ", localChainId);
+    console.log("selectedChainId: ", selectedChainId);
+
     networkDisplay = (
       <div style={{zIndex:2, position:'absolute', right:0,top:60,padding:16}}>
         <Alert
@@ -146,6 +166,13 @@ function App(props) {
       </div>
     )
   }
+  */
+
+  networkDisplay = (
+     <div style={{zIndex:-1, position:'absolute', right:154,top:28,padding:16,color:targetNetwork.color}}>
+       {targetNetwork.name}
+     </div>
+  );
 
   const loadWeb3Modal = useCallback(async () => {
     const provider = await web3Modal.connect();
@@ -204,6 +231,9 @@ function App(props) {
           <Menu.Item key="/subgraph">
             <Link onClick={()=>{setRoute("/subgraph")}} to="/subgraph">Subgraph</Link>
           </Menu.Item>
+          <Menu.Item key="/unitracker">
+            <Link onClick={()=>{setRoute("/unitracker")}} to="/unitracker">Unitracker</Link>
+          </Menu.Item>
         </Menu>
 
         <Switch>
@@ -256,10 +286,10 @@ function App(props) {
             <ExampleUI
               address={address}
               userProvider={userProvider}
-              mainnetProvider={mainnetProvider}
+              ethProvider={mainnetProvider}
               localProvider={localProvider}
               yourLocalBalance={yourLocalBalance}
-              price={price}
+              ethPrice={price}
               tx={tx}
               writeContracts={writeContracts}
               readContracts={readContracts}
@@ -275,6 +305,20 @@ function App(props) {
             mainnetProvider={mainnetProvider}
             />
           </Route>
+            <Route path="/unitracker">
+              <Unitracker
+                 ethProvider={mainnetProvider}
+                 bscProvider={bscProvider}
+                 localProvider={localProvider}
+                 yourLocalBalance={yourLocalBalance}
+                 ethPrice={price}
+                 tx={tx}
+                 writeContracts={writeContracts}
+                 readContracts={readContracts}
+                 purpose={purpose}
+                 setPurposeEvents={setPurposeEvents}
+              />
+            </Route>
         </Switch>
       </BrowserRouter>
 
@@ -335,6 +379,22 @@ function App(props) {
            </Col>
          </Row>
        </div>
+      <div style={{position:'fixed',textAlign:'right',right:0,bottom:20,padding:10}}>
+        <Row align="middle" gutter={4}>
+          <Col span={10}>
+            <Provider name={"mainnet"} provider={mainnetProvider} />
+          </Col>
+          <Col span={6}>
+            <Provider name={"local"} provider={localProvider} />
+          </Col>
+          <Col span={8}>
+            <Provider name={"injected"} provider={injectedProvider} />
+          </Col>
+          <Col span={8}>
+            <Provider name={"BSC"} provider={bscProvider} />
+          </Col>
+        </Row>
+      </div>
 
     </div>
   );
