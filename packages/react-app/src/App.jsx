@@ -12,20 +12,26 @@ import  useCoinGeckoPrices  from "./hooks/CoinGeckoPrices";
 import {Header, Account, Faucet, Ramp, Contract, GasGauge, Provider} from "./components";
 import { Transactor } from "./helpers";
 import { formatEther, parseEther } from "@ethersproject/units";
+import BigNumber from "bignumber.js";
+
+// https://github.com/yezyilomo/state-pool
+import {store, useGlobalState} from 'state-pool';
 
 //import Hints from "./Hints";
 import { Hints, ExampleUI, Subgraph, Unitracker } from "./views"
-import { INFURA_ID, DAI_ADDRESS, DAI_ABI, NETWORK, NETWORKS } from "./constants";
+import { INFURA_ID, DAI_ADDRESS, DAI_ABI, NETWORK, NETWORKS, BSC_TOKENS, LPS, CG_COIN_MAPPINGS } from "./constants";
+
+import erc20Abi from "./abi/erc20";
+import fetchFarms from "./farms/fetchFarms";
 
 const CoinGecko = require('coingecko-api');
 const CoinGeckoClient = new CoinGecko();
 
-// CoinGeckoClient.simple.price({"vs_currencies": "usd", "ids": ["binance-eth", "binance-btc", "binancecoin"]}).then(res => console.log(res));
-
 const { ethers } = require("ethers");
-const { erc20Abi } = require("./abi/erc20.json");
-// import { masterChefAbi} from "./abi/masterchef.json";
+// const { erc20Abi } = require("./abi/erc20.json");
 
+
+// import { masterChefAbi} from "./abi/masterchef.json";
 
 /*
     Welcome to 🏗 scaffold-eth !
@@ -50,7 +56,7 @@ const { erc20Abi } = require("./abi/erc20.json");
 const targetNetwork = NETWORKS['localhost']; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
-const DEBUG = true
+const DEBUG = false
 
 // 🛰 providers
 if(DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
@@ -61,10 +67,88 @@ const mainnetProvider = new JsonRpcProvider("https://mainnet.infura.io/v3/" + IN
 
 // 🏠 Your local provider is usually pointed at your local blockchain
 const localProviderUrl = targetNetwork.rpcUrl;
+const bscProviderUrl = NETWORKS['bsc'].rpcUrl;
 // as you deploy to other networks you can set REACT_APP_PROVIDER=https://dai.poa.network in packages/react-app/.env
 const localProviderUrlFromEnv = process.env.REACT_APP_PROVIDER ? process.env.REACT_APP_PROVIDER : localProviderUrl;
+const bscProviderUrlFromEnv = process.env.BSC_PROVIDER ? process.env.BSC_PROVIDER : bscProviderUrl;
 if(DEBUG) console.log("🏠 Connecting to provider:", localProviderUrlFromEnv);
 const localProvider = new JsonRpcProvider(localProviderUrlFromEnv);
+const bscProvider = new JsonRpcProvider(bscProviderUrl, {name: "bsc", chainId: 56});
+
+
+BigNumber.config({
+  EXPONENTIAL_AT: 1000,
+  DECIMAL_PLACES: 80,
+});
+
+const providers = {
+  bsc: bscProvider,
+  eth: mainnetProvider
+};
+
+const contracts = {
+  bsc: {
+    tokens: {
+      cake: new ethers.Contract(BSC_TOKENS.cake.contract, erc20Abi, bscProvider),
+      banana: new ethers.Contract(BSC_TOKENS.banana.contract, erc20Abi, bscProvider)
+    }
+  }
+};
+
+store.setState("providers", providers);
+store.setState("contracts", contracts);
+store.setState("coinPrices", {hasPrices: false});
+store.setState("farms", {hasFarms: false});
+
+const coinPriceIds = ["binance-eth", "binance-bitcoin", "binancecoin", "antimatter", "pancakeswap-token"];
+
+async function getPrices() {
+
+  const [farmInfos, cgPrices] = await Promise.all([
+     // get the farm info
+     fetchFarms(providers),
+     // get the usd prices for the base coins
+     CoinGeckoClient.simple.price({"vs_currencies": "usd", "ids": coinPriceIds})
+  ]);
+
+  if (cgPrices.success) {
+    let newCoinPrices = {};
+    // transform the keys to the friendlier names (instead of the coingecko id)
+    for (let [key, value] of Object.entries(cgPrices.data)) {
+      newCoinPrices[CG_COIN_MAPPINGS[key]] = value;
+    }
+
+    console.log("newCoinPrices: ", newCoinPrices);
+
+    // now we want to add in the coin prices from the farms
+    for (let farm of farmInfos) {
+      let tokenPriceVsQuote = BigNumber(farm.tokenPriceVsQuote);
+      // get the base token price from CG prices
+      if (newCoinPrices[farm.quoteTokenSymbol.toLocaleLowerCase()]) {
+        let quoteTokenUsd = BigNumber(newCoinPrices[farm.quoteTokenSymbol.toLocaleLowerCase()].usd).times(tokenPriceVsQuote);
+        newCoinPrices[farm.tokenSymbol.toLocaleLowerCase()] = {usd: quoteTokenUsd.toNumber()}
+      } else {
+        console.log("don't have the coingecko price for quote token: ", farm.quoteTokenSymbol);
+      }
+    }
+    // for (const [key, value] of Object.entries(object)) {
+    //   console.log(key, value);
+    // }
+
+    console.log("setting new coin prices: ", newCoinPrices);
+    store.setState("coinPrices", {hasPrices: true, ...newCoinPrices});
+
+
+  } else {
+    store.setState({hasPrices: false});
+    console.log("problem getting coingecko prices: ", cgPrices.message);
+  }
+}
+
+getPrices();
+
+// const cakeContract = new ethers.Contract('0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82', erc20Abi, bscProvider);
+
 
 // 🔭 block explorer URL
 const blockExplorer = targetNetwork.blockExplorer;
@@ -76,7 +160,7 @@ function App(props) {
   const price = useExchangePrice(targetNetwork,mainnetProvider);
 
   // this hook will get some base coin prices from coingecko
-  const prices = useCoinGeckoPrices(CoinGeckoClient);
+  const coinPrices = useCoinGeckoPrices(CoinGeckoClient);
 
   /* 🔥 This hook will get the price of Gas from ⛽️ EtherGasStation */
   const gasPrice = useGasPrice(targetNetwork,"fast");
@@ -311,12 +395,13 @@ function App(props) {
                  bscProvider={bscProvider}
                  localProvider={localProvider}
                  yourLocalBalance={yourLocalBalance}
-                 ethPrice={price}
+                 coinPrices={coinPrices}
                  tx={tx}
                  writeContracts={writeContracts}
                  readContracts={readContracts}
                  purpose={purpose}
                  setPurposeEvents={setPurposeEvents}
+                 // contracts={contracts}
               />
             </Route>
         </Switch>

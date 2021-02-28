@@ -97,5 +97,91 @@ export const NETWORKS = {
         rpcUrl: "https://rpc-mumbai.maticvigil.com",
         faucet: "https://faucet.matic.network/",
         blockExplorer: "https://mumbai-explorer.matic.today/",
+    },
+    bsc: {
+        name: "BSC",
+        color: '#fa9b92',
+        chainId: 56,
+        price: 1,
+        gasPrice:1000000000,
+        rpcUrl: "https://bsc-dataseed1.ninicoin.io/",
+        // faucet: "https://faucet.matic.network/",
+        blockExplorer: "https://bscscan.com",
+
     }
 }
+
+// coingecko prices mappings
+export const CG_COIN_MAPPINGS = {
+    btc: "binance-btc",
+    eth: "binance-eth",
+    bnb: "binancecoin",
+    matter: "antimatter",
+    cake: "pancakeswap-token",
+
+    // inverse
+    "binance-btc": "btc",
+    "binance-eth": "eth",
+    "binancecoin": "bnb",
+    "pancakeswap-token": "cake"
+}
+
+// simon bsc wallet: 0xbE66228bAf51def00493E1bf067a121946Ff4eAe
+
+export const BSC_TOKENS = {
+    cake: {
+        symbol: "CAKE",
+        contract: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"
+    },
+    banana: {
+        symbol: "BANANA",
+        contract: "0x603c7f932ed1fc6575303d8fb018fdcbb0f39a95"
+    },
+    wbnb: {
+        symbol: "WBNB",
+        contract: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
+    },
+    busd: {
+        symbol: "BUSD",
+        contract: "0xe9e7cea3dedca5984780bafc599bd69add087d56"
+    },
+    matter: {
+        symbol: "MATTER",
+        contract: "0x1C9491865a1DE77C5b6e19d2E6a5F1D7a6F2b25F"
+    }
+}
+
+export const LPS = {
+    pancake: {
+        cake_bnb: {
+            symbol: "CAKE-BNB LP",
+            address: "0xA527a61703D82139F8a06Bc30097cC9CAA2df5A6",
+            tokenSymbol: BSC_TOKENS.cake.symbol,
+            tokenAddress: BSC_TOKENS.cake.contract,
+            quoteTokenSymbol: "BNB",
+        }
+    },
+    ape: {
+        banana_bnb: {
+            symbol: 'BANANA-BNB LP',
+            address: "0xf65c1c0478efde3c19b49ecbe7acc57bb6b1d713",
+            tokenSymbol: BSC_TOKENS.banana.symbol,
+            tokenAddress: BSC_TOKENS.banana.contract,
+            quoteTokenSymbol: "BNB",
+        },
+        banana_cake: {
+            symbol: 'CAKE-BANANA LP',
+            address: "0x9949E1DB416a8a05A0cAC0bA6Ea152ba8729e893",
+            tokenSymbol: BSC_TOKENS.banana.symbol,
+            tokenAddress: BSC_TOKENS.banana.contract,
+            quoteTokenSymbol: "BNB",
+        }
+    }
+}
+export const AMMS = {
+
+}
+
+
+// ME BSC: 0xbE66228bAf51def00493E1bf067a121946Ff4eAe
+

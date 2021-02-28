@@ -58,6 +58,10 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.13.8",
-    "coingecko-api": "^1.0.10"
+    "bignumber.js": "^9.0.1",
+    "coingecko-api": "^1.0.10",
+    "ethers-multicall": "^0.1.6",
+    "json-loader": "^0.5.7",
+    "state-pool": "^0.3.0"
   }
 }

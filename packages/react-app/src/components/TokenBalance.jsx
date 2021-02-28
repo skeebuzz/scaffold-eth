@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import { formatEther } from "@ethersproject/units";
 import { useTokenBalance } from "eth-hooks";
+import {store, useGlobalState} from 'state-pool';
 
 export default function TokenBalance(props) {
-  const [dollarMode, setDollarMode] = useState(true);
+   const useDollars = props.usd ? true : false;
+  const [dollarMode, setDollarMode] = useState(useDollars);
 
-  const tokenContract = props.contracts && props.contracts[props.name];
+   const [contracts, , ] = useGlobalState("contracts");
+   const [coinPrices, , ] = useGlobalState("coinPrices");
+
+   const networkName = props.provider.network.name;
+
+  // const tokenContract = props.contracts && props.contracts[props.provider.name][props.token];
+  const tokenContract = contracts[networkName].tokens[props.token]
   const balance = useTokenBalance(tokenContract, props.address, 1777);
 
   let floatBalance = parseFloat("0.00");
@@ -24,7 +32,10 @@ export default function TokenBalance(props) {
 
   let displayBalance = floatBalance.toFixed(4);
 
-  if (props.dollarMultiplier && dollarMode) {
+  if (dollarMode && coinPrices.hasPrices && coinPrices[props.token]) {
+     // if we have a coingecko quote use it
+     displayBalance = "$" + (floatBalance * coinPrices[props.token].usd).toFixed(2);
+  } else if (props.dollarMultiplier && dollarMode) {
     displayBalance = "$" + (floatBalance * props.dollarMultiplier).toFixed(2);
   }
 
