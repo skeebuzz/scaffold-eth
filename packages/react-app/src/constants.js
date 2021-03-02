@@ -113,7 +113,7 @@ export const NETWORKS = {
 
 // coingecko prices mappings
 export const CG_COIN_MAPPINGS = {
-    btc: "binance-btc",
+    btc: "binance-bitcoin",
     eth: "binance-eth",
     bnb: "binancecoin",
     matter: "antimatter",
@@ -121,10 +121,13 @@ export const CG_COIN_MAPPINGS = {
 
     // inverse
     "binance-btc": "btc",
+    "binance-bitcoin": "btc",
     "binance-eth": "eth",
     "binancecoin": "bnb",
     "pancakeswap-token": "cake"
 }
+
+export const STABLE_USD_COINS = [ "busd", "ust", "usdc", "usdt"];
 
 // simon bsc wallet: 0xbE66228bAf51def00493E1bf067a121946Ff4eAe
 

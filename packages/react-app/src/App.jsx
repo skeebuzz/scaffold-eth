@@ -19,7 +19,7 @@ import {store, useGlobalState} from 'state-pool';
 
 //import Hints from "./Hints";
 import { Hints, ExampleUI, Subgraph, Unitracker } from "./views"
-import { INFURA_ID, DAI_ADDRESS, DAI_ABI, NETWORK, NETWORKS, BSC_TOKENS, LPS, CG_COIN_MAPPINGS } from "./constants";
+import { INFURA_ID, DAI_ADDRESS, DAI_ABI, NETWORK, NETWORKS, BSC_TOKENS, LPS, CG_COIN_MAPPINGS, STABLE_USD_COINS } from "./constants";
 
 import erc20Abi from "./abi/erc20";
 import fetchFarms from "./farms/fetchFarms";
@@ -100,7 +100,7 @@ store.setState("contracts", contracts);
 store.setState("coinPrices", {hasPrices: false});
 store.setState("farms", {hasFarms: false});
 
-const coinPriceIds = ["binance-eth", "binance-bitcoin", "binancecoin", "antimatter", "pancakeswap-token"];
+const coinPriceIds = ["binance-eth", "binance-bitcoin", "binancecoin", "antimatter", "pancakeswap-token", "wbnb"];
 
 async function getPrices() {
 
@@ -118,17 +118,22 @@ async function getPrices() {
       newCoinPrices[CG_COIN_MAPPINGS[key]] = value;
     }
 
+    for (let stablecoin of STABLE_USD_COINS) {
+      newCoinPrices[stablecoin] = { usd: 1};
+    }
+
     console.log("newCoinPrices: ", newCoinPrices);
+    console.log("farmConfigs: ", farmInfos);
 
     // now we want to add in the coin prices from the farms
     for (let farm of farmInfos) {
       let tokenPriceVsQuote = BigNumber(farm.tokenPriceVsQuote);
       // get the base token price from CG prices
-      if (newCoinPrices[farm.quoteTokenSymbol.toLocaleLowerCase()]) {
-        let quoteTokenUsd = BigNumber(newCoinPrices[farm.quoteTokenSymbol.toLocaleLowerCase()].usd).times(tokenPriceVsQuote);
+      if (newCoinPrices[farm.quoteTokenSymbol.toLowerCase()]) {
+        let quoteTokenUsd = BigNumber(newCoinPrices[farm.quoteTokenSymbol.toLowerCase()].usd).times(tokenPriceVsQuote);
         newCoinPrices[farm.tokenSymbol.toLocaleLowerCase()] = {usd: quoteTokenUsd.toNumber()}
       } else {
-        console.log("don't have the coingecko price for quote token: ", farm.quoteTokenSymbol);
+        console.log("...>>>>... don't have the coingecko price for quote token: ", farm.quoteTokenSymbol);
       }
     }
     // for (const [key, value] of Object.entries(object)) {

@@ -9,6 +9,7 @@ export const QuoteToken = {
       'UST' : 'UST',
       'ETH' : 'ETH',
       'COMP' : 'COMP',
+      'BANANA': 'BANANA'
 }
 
 const farms = [

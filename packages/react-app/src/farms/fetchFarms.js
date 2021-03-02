@@ -1,7 +1,11 @@
 import erc20 from '../abi/erc20.json'
 import masterchefABI from '../abi/masterchef.json'
-import { getAddress, getMasterChefAddress } from '../utils/cakeAddressHelpers'
-import farmsConfig from '../config/cakefarms'
+import { getAddress } from '../utils/cakeAddressHelpers'
+import cakeFarmsConfig from '../config/cakefarms'
+import apeFarmsConfig from '../config/apefarms'
+import cakeaddresses from '../config/cakecontracts'
+import apeaddresses from '../config/apecontracts'
+
 import {Contract, Provider} from "ethers-multicall";
 
 // the lpTokenRatio doesn't get calculated (always zero) if we use this bignumber
@@ -21,8 +25,18 @@ const fetchFarms = async (providers) => {
    const callProvider = new Provider(bscProvider);
    await callProvider.init();
 
+   for (let cakeFarm of cakeFarmsConfig) {
+      cakeFarm.mcAddress = cakeaddresses.masterChef[bscProvider.network.chainId];
+   }
+
+   for (let apeFarm of apeFarmsConfig) {
+      apeFarm.mcAddress = apeaddresses.masterApe[bscProvider.network.chainId];
+   }
+
+   var allFarmsConfig = cakeFarmsConfig.concat(apeFarmsConfig);
+
    const farms = await Promise.all(
-      farmsConfig.map(async farmConfig => {
+      allFarmsConfig.map(async farmConfig => {
          const lpAddress = getAddress(farmConfig.lpAddresses, bscProvider);
 
          // balance of LP contract
@@ -35,7 +49,7 @@ const fetchFarms = async (providers) => {
 
          // Balance of LP tokens in the master chef contract
          const lpContract = new Contract(getAddress(farmConfig.lpAddresses, bscProvider), erc20);
-         const lpTokenBalanceMCCall = lpContract.balanceOf(getMasterChefAddress(bscProvider));
+         const lpTokenBalanceMCCall = lpContract.balanceOf(farmConfig.mcAddress);
 
          // total supply of LP tokens
          const lpTotalSupplyCall = lpContract.totalSupply();
@@ -94,7 +108,7 @@ const fetchFarms = async (providers) => {
 
          // console.log("token amount: ", tokenAmount, " quoteTokenAmount: ", quoteTokenAmount);
 
-         const masterChefContract = new Contract(getMasterChefAddress(bscProvider), masterchefABI);
+         const masterChefContract = new Contract(farmConfig.mcAddress, masterchefABI);
          const poolInfoCall = masterChefContract.poolInfo(farmConfig.pid);
          const totalAllocCall = masterChefContract.totalAllocPoint();
 
